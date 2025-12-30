@@ -1,0 +1,1592 @@
+<!doctype html> 
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E-LOGBOOK INSTALASI BEDAH SENTRAL</title>
+
+  <!-- Bootstrap CSS & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Gaya dasar -->
+  <style>
+    .navbar{ position: relative; z-index: 1051; }
+    body{background:#0b1720;color:#e9eef3}
+    .navbar    { background-color: #004D61; }
+    .offcanvas { background-color: #000000; }
+    .card      { background-color: #FF7A0F; color:#08131a }
+    .form-section{border-left:3px solid #000000;padding-left:1rem}
+    .required:after{content:" *";color:#ff6b6b}
+    .thumb{width:64px;height:64px;object-fit:cover;border-radius:8px}
+    .table thead th{position:sticky;top:0;background:#FF7A0F;z-index:1}
+    .badge-outline{border:1px solid currentColor;background:transparent}
+    .truncate{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .pointer{cursor:pointer}
+    /* Toast area */
+    #toastArea{ position: fixed; right: 16px; bottom: 16px; z-index: 2000; }
+  </style>
+
+  <link rel="stylesheet" href="or-tracker.css?v=2">
+</head>
+
+<body>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Auth dulu biar no-kedip -->
+  <script src="auth.js"></script>
+  <script> window.USER = ORAuth.requireAuth(); </script>
+
+
+  <!-- html2pdf untuk render PDF sisi-klien -->
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+
+  <nav class="navbar navbar-expand-lg navbar-dark border-bottom border-secondary">
+    <div class="container-fluid">
+      <span class="navbar-brand">E-LOGBOOK INSTALASI BEDAH SENTRAL</span>
+      <div class="ms-auto d-flex align-items-center gap-2">
+        <span class="text-white-50 small" id="whoami"></span>
+
+        <!-- [ADD BUTTONS] ===== Ekspor/Impor di NAVBAR ===== -->
+        <button class="btn btn-sm btn-outline-light" id="btnExport">
+          <i class="bi bi-download"></i> Ekspor
+        </button>
+        <label class="btn btn-sm btn-outline-light mb-0" for="fileImport">
+          <i class="bi bi-upload"></i> Impor
+        </label>
+        <input type="file" id="fileImport" accept="application/json" class="d-none">
+        <!-- [END ADD BUTTONS] -->
+
+        <button class="btn btn-sm btn-warning" id="btnClearAll"><i class="bi bi-trash"></i> Hapus Semua</button>
+        <button class="btn btn-sm btn-danger" id="btnLogout" data-logout>
+          <i class="bi bi-box-arrow-right"></i> Keluar
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid py-3">
+    <div class="row g-3">
+      <!-- Form -->
+      <div class="col-lg-4">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Form Entri Kegiatan OK</strong>
+            <span class="badge text-bg-secondary">IBS</span>
+          </div>
+          <div class="card-body">
+            <form id="entryForm" class="form-section" novalidate>
+              <input type="hidden" id="recordId">
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label required">Tanggal</label>
+                  <input type="date" class="form-control" id="tanggal" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Waktu</label>
+                  <input type="time" class="form-control" id="waktu">
+                </div>
+
+                <div class="col-12"><hr></div>
+
+                <div class="col-6">
+                  <label class="form-label required">Nama Petugas</label>
+                  <input type="text" class="form-control" id="nama" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">NIP/NIPPPK/NIK</label>
+                  <input type="text" class="form-control" id="identitas" placeholder="Contoh: 1987xxxxxxxxxx">
+                </div>
+
+                <div class="col-6">
+                  <label class="form-label">Jenjang Karier</label>
+                  <select class="form-select" id="JenjangKarier">
+                    <option value="">-</option>
+                    <option>Pra PK</option><option>PK 1</option><option>PK 2</option>
+                    <option>PK 3</option><option>PK 4</option><option>PK 5</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Jabatan</label>
+                  <select class="form-select" id="Jabatan">
+                    <option value="">-</option>
+                    <option>Karu</option><option>PP</option><option>PJ Shift</option><option>PA</option>
+                  </select>
+                </div>
+
+                <div class="col-6">
+                  <label class="form-label">Jenis Pegawai</label>
+                  <select class="form-select" id="jenisPegawai">
+                    <option value="">-</option>
+                    <option>Perawat</option><option>Penata Anestesi</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Shift</label>
+                  <select class="form-select" id="shift">
+                    <option value="">-</option>
+                    <option>Pagi</option><option>Sore</option><option>Malam</option><option>On-call</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Penugasan</label>
+                  <select class="form-select" id="Penugasan">
+                    <option value="">-</option>
+                    <option>Penerimaan</option><option>RR</option><option>OK 1</option><option>OK 2</option>
+                    <option>OK 3</option><option>OK 4</option><option>OK 5</option>
+                  </select>
+                </div>
+
+                <div class="col-12"><hr></div>
+
+                <div class="col-8">
+                  <label class="form-label required">Nama Pasien</label>
+                  <input type="text" class="form-control" id="namaPasien" required>
+                </div>
+                <div class="col-4">
+                  <label class="form-label required">No. RM</label>
+                  <input type="text" class="form-control" id="noRM" required>
+                </div>
+                <div class="col-4">
+                  <label class="form-label">Umur</label>
+                  <input type="number" class="form-control" id="umur" min="0" max="130">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Diagnosa Pre-Operasi</label>
+                  <textarea class="form-control" id="dxPre" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Rencana Tindakan</label>
+                  <textarea class="form-control" id="plan" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Diagnosa Post-Operasi</label>
+                  <textarea class="form-control" id="dxPost" rows="2"></textarea>
+                </div>
+
+                <!-- Team Operasi -->
+                <div class="col-12">
+                  <label for="teamOperasi" class="form-label">Team Operasi</label>
+                  <select id="teamOperasi" class="form-control">
+                    <option value="">-</option>
+                    <option value="Penata Anestesi">Penata Anestesi</option>
+                    <option value="Asisten 2">Asisten 2</option>
+                    <option value="Circulating Nurse">Circulating Nurse</option>
+                    <option value="Scrub Nurse">Scrub Nurse</option>
+                  </select>
+                </div>
+
+                <!-- Uraian Kegiatan -->
+                <div class="col-12">
+                  <label for="uraianKegiatan" class="form-label mt-2">Uraian Kegiatan</label>
+                  <div class="d-flex gap-2 align-items-center my-1">
+                    <button type="button" id="btnTambahBaris" class="btn btn-sm btn-secondary">+ Tambah Baris</button>
+                    <label class="small d-flex align-items-center gap-1">
+                      <input type="checkbox" id="chkAppend" />
+                      <span>Jika sudah ada teks: tambahkan (jangan ditimpa)</span>
+                    </label>
+                  </div>
+                  <textarea id="uraianKegiatan" class="form-control" rows="6" placeholder="Ringkas, Sesuai SPO"></textarea>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Bukti Dukung Dokumen (PDF, DOC, XLS, dll.)</label>
+                  <input type="file" class="form-control" id="buktiDokumen" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.zip,.rar,application/*">
+                  <div id="docPreview" class="small mt-2 text-secondary"></div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label">Bukti Dukung Foto</label>
+                  <input type="file" class="form-control" id="buktiFoto" multiple accept="image/*">
+                  <div id="imgPreview" class="d-flex flex-wrap gap-2 mt-2"></div>
+                </div>
+
+                <div class="col-12 d-flex gap-2 mt-3">
+                  <button class="btn btn-primary" type="submit" id="btnSimpan">
+                    <i class="bi bi-save2"></i> Simpan
+                  </button>
+                  <button class="btn btn-secondary" type="reset" id="btnReset">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rekap -->
+      <div class="col-lg-8">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <strong>Rekap Kegiatan</strong>
+            <div class="d-flex flex-wrap gap-3 align-items-start">
+              <div class="d-flex flex-column">
+                <label for="q" class="form-label mb-1">Pencarian</label>
+                <input id="q" class="form-control form-control-sm" placeholder="Cari nama pasien / petugas / RM">
+              </div>
+              <div class="d-flex flex-column">
+                <label for="filterShift" class="form-label mb-1">Shift</label>
+                <select id="filterShift" class="form-select form-select-sm">
+                  <option value="">-</option>
+                  <option>Pagi</option><option>Sore</option><option>Malam</option><option>On-call</option>
+                </select>
+              </div>
+              <div class="d-flex flex-column">
+                <label for="filterDate" class="form-label mb-1">Tanggal</label>
+                <input type="date" id="filterDate" class="form-control form-control-sm">
+              </div>
+              <div class="d-flex align-items-end">
+                <button class="btn btn-sm btn-outline-light" id="btnPrint"><i class="bi bi-printer"></i> Cetak</button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-dark table-striped align-middle mb-0" id="dataTable">
+                <thead>
+                  <tr>
+                    <th>Tgl</th>
+                    <th>Petugas</th>
+                    <th>Shift</th>
+                    <th>Pasien</th>
+                    <th>No RM</th>
+                    <th>Dx Pre</th>
+                    <th>Rencana</th>
+                    <th>Dx Post</th>
+                    <th>Tim</th>
+                    <th>Status</th>
+                    <th>Dok</th>
+                    <th>Foto</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- [ADD] Rekap Perawat (Mingguan/Bulanan) -->
+      <div class="col-12">
+        <div class="card shadow-sm mt-3" id="rekapPerawatCard">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+            <strong>Rekap Perawat per Periode</strong>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <div class="d-flex align-items-center gap-2">
+                <label class="form-label m-0 small">Periode</label>
+                <select id="rekapPeriodType" class="form-select form-select-sm">
+                  <option value="minggu">Mingguan</option>
+                  <option value="bulan" selected>Bulanan</option>
+                </select>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <label class="form-label m-0 small">Tanggal Acuan</label>
+                <input type="date" id="rekapAnchorDate" class="form-control form-control-sm">
+              </div>
+              <button class="btn btn-sm btn-outline-light" id="btnRekapExport">
+                <i class="bi bi-filetype-pdf"></i> Ekspor PDF
+              </button>
+            </div>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-dark table-striped align-middle mb-0" id="rekapPerawatTable">
+                <thead>
+                  <tr>
+                    <th style="width:28%">Perawat</th>
+                    <th class="text-center">Total</th>
+                    <th class="text-center">Draft</th>
+                    <th class="text-center">Diajukan</th>
+                    <th class="text-center">Disetujui</th>
+                    <th class="text-center">Ditolak</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                  <tr class="table-secondary text-dark">
+                    <th>JUMLAH</th>
+                    <th class="text-center" id="sum_total">0</th>
+                    <th class="text-center" id="sum_draft">0</th>
+                    <th class="text-center" id="sum_diajukan">0</th>
+                    <th class="text-center" id="sum_disetujui">0</th>
+                    <th class="text-center" id="sum_ditolak">0</th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="p-2 small text-secondary" id="rekapPeriodDesc"></div>
+          </div>
+        </div>
+      </div>
+      <!-- [END ADD] -->
+
+    </div>
+  </div>
+
+  <!-- Modal Detail -->
+  <div class="modal fade" id="detailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header">
+          <h5 class="modal-title">Detail Kegiatan</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="detailBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+          <button type="button" class="btn btn-outline-info" id="btnDownloadDetail">
+            <i class="bi bi-download"></i> Download
+          </button>
+          <button type="button" class="btn btn-primary" id="btnPrintDetail">
+            <i class="bi bi-printer"></i> Cetak
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- [ADD] Modal Rekap Perawat Detail -->
+  <div class="modal fade" id="rekapPerawatModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content bg-dark text-light">
+        <div class="modal-header">
+          <h5 class="modal-title">Detail Kegiatan — <span id="rekapNamaPerawat"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="rekapPerawatBody"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+          <button type="button" class="btn btn-primary" id="btnPrintRekapPerawat">
+            <i class="bi bi-printer"></i> Cetak
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- [END ADD] -->
+
+  <!-- Toast area -->
+  <div id="toastArea" class="toast-container"></div>
+
+  <!-- ====== APP SCRIPT ====== -->
+  <script>
+    // Util mini
+    const $  = (sel, ctx=document) => ctx.querySelector(sel);
+    const $$ = (sel, ctx=document) => Array.from(ctx.querySelectorAll(sel));
+
+    // Keys & state
+    const LS_KEY = 'or-tracker-records-v1';
+    window.tempDocs = window.tempDocs || [];
+    window.tempImgs = window.tempImgs || [];
+
+    // Whoami
+    (function(){
+      const who = $('#whoami');
+      if (who && window.USER) who.textContent = `Login: ${USER.name} (${USER.role})`;
+    })();
+
+    // Logout
+    (function(){
+      document.addEventListener('click', function(e){
+        const btn = e.target.closest('[data-logout], #btnLogout');
+        if (!btn) return;
+        e.preventDefault();
+        if (!confirm('Keluar dari aplikasi?')) return;
+        ORAuth.logout();
+      });
+    })();
+
+    // Helpers
+    // ====== SERVER STORAGE (PHP) + FALLBACK localStorage ======
+const API_URL = 'api/records.php';
+let RECORDS_CACHE = null;
+
+function loadRecords(){
+  // kalau sudah tersambung server, pakai cache
+  if (Array.isArray(RECORDS_CACHE)) return RECORDS_CACHE;
+
+  // fallback lokal (biar yang sudah jalan tidak rusak)
+  try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function saveRecords(arr){
+  // update cache dulu supaya UI langsung berubah
+  RECORDS_CACHE = arr;
+
+  // tetap simpan lokal sebagai backup/offline
+  try { localStorage.setItem(LS_KEY, JSON.stringify(arr)); } catch(e){}
+
+  // kirim ke server (fire-and-forget)
+  fetch(API_URL + '?v=' + Date.now(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ op:'set', records: arr })
+  }).then(r=>{
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+  }).catch(_=>{
+    // jangan ganggu user; cukup diam / atau toast kalau kamu mau
+    // notify('Server tidak bisa diakses, pakai data lokal dulu.', 'error');
+  });
+}
+
+// Ambil data server saat awal buka halaman
+(async function initServerRecords(){
+  try{
+    const r = await fetch(API_URL + '?v=' + Date.now(), { cache:'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    if (Array.isArray(data)) {
+      RECORDS_CACHE = data;
+      // optional: mirror ke local
+      try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch(e){}
+      renderTable(); // refresh tabel setelah data server masuk
+    }
+  }catch(e){
+    // server belum siap => tetap pakai localStorage
+    RECORDS_CACHE = null;
+  }
+})();
+
+    function getCurrentUser(){ try { return ORAuth.currentUser ? ORAuth.currentUser() : null; } catch { return null; } }
+    function bytesToSize(bytes) {
+      function filesToObjects(fileList){
+        const files = Array.from(fileList || []);
+        const readOne = (f) => new Promise((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve({
+            name: f.name,
+            size: f.size,
+            type: f.type,
+            dataUrl: fr.result
+          });
+          fr.onerror = reject;
+          fr.readAsDataURL(f);
+        });
+        return Promise.all(files.map(readOne));
+      }
+    }
+
+      // Dokumen
+      (function(){
+        const inp = document.getElementById('buktiDokumen');
+        const prev = document.getElementById('docPreview');
+        if (!inp || !prev) return;
+
+        inp.addEventListener('change', async (e) => {
+        try{
+        window.tempDocs = await filesToObjects(e.target.files);
+        prev.innerHTML = (window.tempDocs || [])
+        .map(d => `<span class="badge text-bg-dark border me-1 mb-1">${d.name} • ${bytesToSize(d.size)}</span>`)
+        .join('');
+    }catch(err){
+      console.error(err);
+      alert('Gagal membaca dokumen.');
+        }
+      });
+    })();
+
+    // Foto
+    (function(){
+  const inp  = document.getElementById('buktiFoto');
+  const wrap = document.getElementById('imgPreview');
+  if (!inp || !wrap) return;
+
+  inp.addEventListener('change', async (e) => {
+    try{
+      window.tempImgs = await filesToObjects(e.target.files);
+      wrap.innerHTML = '';
+      (window.tempImgs || []).forEach(img => {
+        const im = new Image();
+        im.src = img.dataUrl;
+        im.className = 'thumb border border-secondary';
+        wrap.appendChild(im);
+      });
+    }catch(err){
+      console.error(err);
+      alert('Gagal membaca foto.');
+        }
+      });
+    })();
+
+    function uid(){ return crypto.randomUUID ? crypto.randomUUID() : Date.now()+'_'+Math.random().toString(16).slice(2); }
+    function roleLower(){ return ((getCurrentUser()?.role)||'').toLowerCase(); }
+    function isPriv(){ return ['admin','operator'].includes(roleLower()); }
+
+    // Toast
+    function notify(msg, type='info'){
+      const id = 't_'+Date.now();
+      const el = document.createElement('div');
+      el.className = `toast align-items-center text-bg-${type==='error'?'danger':type} border-0`;
+      el.id = id;
+      el.role = 'alert';
+      el.ariaLive = 'assertive';
+      el.ariaAtomic = 'true';
+      el.innerHTML = `
+        <div class="d-flex">
+          <div class="toast-body">${msg}</div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>`;
+      $('#toastArea').appendChild(el);
+      const t = new bootstrap.Toast(el, { delay: 2500 });
+      t.show();
+      el.addEventListener('hidden.bs.toast', ()=> el.remove());
+    }
+
+    // Template uraian
+    const TUGAS_TEMPLATE = {
+      "Scrub Nurse": [
+        "• Menyiapkan dan mengatur instrumen steril di meja Mayo & back table",
+        "• Menjaga kesterilan area operasi (aseptik-antiseptik) selama tindakan",
+        "• Memberikan instrumen kepada operator sesuai tahapan pembedahan",
+        "• Menghitung kasa, instrumen, jarum: pra–intra–pasca operasi bersama circulating",
+        "• Mengelola spesimen (label, wadah, pengiriman) sesuai prosedur",
+        "• Dokumentasi tindakan dan discrepancy count jika ada"
+      ].join("\n"),
+      "Circulating Nurse": [
+        "• Menyiapkan ruang operasi, perangkat, dan peralatan non-steril",
+        "• Membuka paket steril dan membantu menjaga alur aseptik",
+        "• Posisi pasien, pemasangan grounding pad/line sesuai instruksi",
+        "• Menyediakan tambahan alat/bahan, memastikan fungsi mesin & suction",
+        "• Verifikasi identitas, time-out, dan dokumentasi intraoperatif",
+        "• Hitung kasa/instrumen bersama scrub, pengelolaan limbah & spesimen"
+      ].join("\n"),
+      "Asisten 2": [
+        "• Retraksi jaringan dan ekspos area operasi",
+        "• Hemostasis (manual/instrumen) dan suction sesuai instruksi operator",
+        "• Menjaga lapangan operasi tetap kering/terbuka",
+        "• Membantu penjahitan/penutupan luka",
+        "• Kolaborasi count dengan perawat untuk keselamatan pasien"
+      ].join("\n"),
+      "Penata Anestesi": [
+        "• Menerima klien di ruang penerimaan",
+        "• Menyiapkan dan menilai kembali mesin anestesi dan kelengkapan folmulir anestesi",
+        "• Menyiapkan obat-obatan anestesi dan membantu ahli anestesi dalam proses anestesi",
+        "• Membebaskan jalan nafas dengan cara mempertahankan posisi endotracheal tube",
+        "• Mempertahankan keseimbangan cairan selama pembedahan",
+        "• Monitoring tanda-tanda vital selama pembedahan",
+        "• Melengkapi catatan perkembangan klien sebelum, selama dan setelah pembedahan",
+        "• Memindahkan klien ke RR/ruang rawat bila kondisi sudah stabil"
+      ].join("\n")
+    };
+
+    // Uraian interaksi
+    (function(){
+      const selectTeam = $("#teamOperasi");
+      const txt        = $("#uraianKegiatan");
+      const btnTambah  = $("#btnTambahBaris");
+      const chkAppend  = $("#chkAppend");
+      let userEdited = false;
+
+      txt.addEventListener("input", () => userEdited = true);
+
+      selectTeam.addEventListener("change", () => {
+        const role = selectTeam.value;
+        const template = TUGAS_TEMPLATE[role] || "";
+        if (!template) return;
+
+        if (userEdited && !chkAppend.checked){
+          const ok = confirm("Uraian sudah kamu edit. Ganti sesuai pilihan " + role + "?");
+          if (!ok) return;
+          txt.value = template;
+        } else {
+          if (chkAppend.checked && txt.value.trim()){
+            txt.value = txt.value.replace(/\s*$/, "") + "\n\n" + template;
+          } else {
+            txt.value = template;
+          }
+        }
+        userEdited = false;
+      });
+
+      btnTambah.addEventListener("click", () => {
+        const bullet = "• ";
+        const needsNL = txt.value.trim().length > 0 && !txt.value.endsWith("\n");
+        txt.value += (needsNL ? "\n" : "") + bullet;
+        txt.focus();
+        txt.selectionStart = txt.selectionEnd = txt.value.length;
+        userEdited = true;
+      });
+
+      txt.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const start = txt.selectionStart;
+          const before = txt.value.slice(0, start);
+          const lineStart = before.lastIndexOf("\n") + 1;
+          const currentLine = before.slice(lineStart);
+          if (currentLine.trim().startsWith("•")) {
+            setTimeout(() => {
+              const pos = txt.selectionStart;
+              txt.setRangeText("• ", pos, pos, "end");
+            }, 0);
+          }
+        }
+      });
+    })();
+
+    // Status helpers
+    function statusBadge(st){
+      const map = {
+        draft:    '<span class="badge text-bg-secondary">Draft</span>',
+        submitted:'<span class="badge text-bg-info">Diajukan</span>',
+        approved: '<span class="badge text-bg-success">Disetujui</span>',
+        rejected: '<span class="badge text-bg-danger">Ditolak</span>'
+      };
+      return map[st] || st || '';
+    }
+    function canEdit(rec){
+      const me = getCurrentUser();
+      if (isPriv()) return true;
+      if ((rec.owner !== (me?.username))) return false;
+      return !['submitted','approved'].includes(rec.status); // perawat: tidak bisa edit saat diajukan/approved
+    }
+    function canDelete(rec){
+      if (isPriv()) return true;
+      const me = getCurrentUser();
+      return rec.owner === (me?.username) && rec.status !== 'approved';
+    }
+
+    // Tabel
+    function renderTable(){
+      const tbody  = $('#dataTable tbody');
+      const q      = ($('#q')?.value || '').toLowerCase();
+      const fShift = $('#filterShift')?.value || '';
+      const fDate  = $('#filterDate')?.value || '';
+
+      const USER = getCurrentUser() || { username:'anon', role:'staff' };
+      const canSeeAll = isPriv();
+
+      const rows = loadRecords()
+        .filter(r => canSeeAll || r.owner === USER.username)
+        .filter(r => !q || [r.nama, r.namaPasien, r.noRM, r.penugasan].some(v=>String(v||'').toLowerCase().includes(q)))
+        .filter(r => !fShift || r.shift === fShift)
+        .filter(r => !fDate  || r.tanggal === fDate)
+        .sort((a,b)=> (b.tanggal + (b.waktu||'')).localeCompare(a.tanggal + (a.waktu||'')));
+
+      tbody.innerHTML = rows.map(r=>{
+        const docs=(r.docs||[]).length, imgs=(r.imgs||[]).length;
+        const tim=(r.team||[]).slice(0,2).join(', ')+((r.team||[]).length>2?` +${(r.team||[]).length-2}`:'');
+        // Aksi per peran & status
+        let acts = `<button class="btn btn-sm btn-outline-info me-1" data-id="${r.id}" data-act="detail" title="Detail"><i class="bi bi-eye"></i></button>`;
+        if (canEdit(r)){
+          acts += `<button class="btn btn-sm btn-outline-warning me-1" data-id="${r.id}" data-act="edit" title="Edit"><i class="bi bi-pencil"></i></button>`;
+        }
+        if (canDelete(r)){
+          acts += `<button class="btn btn-sm btn-outline-danger me-1" data-id="${r.id}" data-act="del" title="Hapus"><i class="bi bi-trash"></i></button>`;
+        }
+        // Ajukan (perawat pemilik) saat draft/ditolak
+        const me = getCurrentUser();
+        const isOwner = r.owner === (me?.username);
+        if (!isPriv() && isOwner && ['draft','rejected'].includes(r.status||'draft')){
+          acts += `<button class="btn btn-sm btn-primary" data-id="${r.id}" data-act="submit" title="Ajukan ke Operator"><i class="bi bi-send-check"></i> Ajukan</button>`;
+        }
+        // Panel operator/kepala/admin buat approve/reject
+        if (isPriv() && (r.status==='submitted')){
+          acts += `
+            <button class="btn btn-sm btn-success me-1" data-id="${r.id}" data-act="approve" title="Setujui"><i class="bi bi-check2-circle"></i></button>
+            <button class="btn btn-sm btn-danger" data-id="${r.id}" data-act="reject" title="Tolak"><i class="bi bi-x-circle"></i></button>
+          `;
+        }
+
+        return `<tr>
+          <td>${r.tanggal||''}<div class="text-secondary small">${r.waktu||''}</div></td>
+          <td><div class="truncate" title="${r.nama||''}">${r.nama||''}</div><div class="small text-secondary">${r.jabatan||''}</div></td>
+          <td>${r.shift||''}</td>
+          <td class="truncate" title="${r.namaPasien||''}">${r.namaPasien||''}</td>
+          <td>${r.noRM||''}</td>
+          <td class="truncate" title="${r.dxPre||''}">${r.dxPre||''}</td>
+          <td class="truncate" title="${r.plan||''}">${r.plan||''}</td>
+          <td class="truncate" title="${r.dxPost||''}">${r.dxPost||''}</td>
+          <td class="truncate" title="${(r.team||[]).join(', ')}">${tim||''}</td>
+          <td>${statusBadge(r.status||'draft')}</td>
+          <td>${docs}</td>
+          <td>${imgs}</td>
+          <td class="text-nowrap">${acts}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Submit form
+   document.getElementById('entryForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const f = e.target;
+      if (!f.checkValidity()){ f.reportValidity(); return; }
+
+      const USER = getCurrentUser() || {username:'anon', name:'Anon', role:'staff'};
+      const existingId = $('#recordId').value;
+      const arr = loadRecords();
+      const idx = arr.findIndex(x=>x.id===existingId);
+
+      // Jika edit: hormati status terdahulu
+      const prev = idx>-1 ? arr[idx] : {};
+
+      // Guard: perawat tidak boleh edit saat submitted/approved
+      if (!isPriv() && idx>-1 && ['submitted','approved'].includes(prev.status)){
+        notify('Tidak bisa mengubah entri yang sudah diajukan/disetujui.', 'error');
+        return;
+      }
+
+      // === Fallback: kalau tempDocs/tempImgs kosong tapi user sudah pilih file ===
+        const dokInp  = document.getElementById('buktiDokumen');
+        const fotoInp = document.getElementById('buktiFoto');
+
+        try{
+          if ((!window.tempDocs || window.tempDocs.length===0) && dokInp?.files?.length){
+            window.tempDocs = await filesToObjects(dokInp.files);
+          }
+          if ((!window.tempImgs || window.tempImgs.length===0) && fotoInp?.files?.length){
+            window.tempImgs = await filesToObjects(fotoInp.files);
+          }
+        }catch(_){
+          // DIHILANGKAN: tidak ada alert "gagal membaca"
+        }
+
+      const rec = {
+        id: existingId || uid(),
+        owner: prev.owner || USER.username,
+        ownerName: prev.ownerName || USER.name,
+        createdAt: existingId ? (prev.createdAt || new Date().toISOString()) : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+
+        tanggal: $('#tanggal').value,
+        waktu:   $('#waktu').value,
+        nama:    $('#nama').value,
+        identitas: $('#identitas').value,
+
+        jenjang: $('#JenjangKarier').value,
+        jabatan: $('#Jabatan').value,
+        jenisPegawai: $('#jenisPegawai').value,
+        shift: $('#shift').value,
+        penugasan: $('#Penugasan').value,
+
+        namaPasien: $('#namaPasien').value,
+        noRM: $('#noRM').value,
+        umur: $('#umur').value,
+        dxPre: $('#dxPre').value,
+        plan:  $('#plan').value,
+        dxPost: $('#dxPost').value,
+
+        team: ($('#teamOperasi').value ? [$('#teamOperasi').value] : []),
+        uraian: $('#uraianKegiatan').value,
+
+        docs: [...(window.tempDocs||[])],
+        imgs: [...(window.tempImgs||[])],
+
+        status: prev.status || 'draft',
+        submittedAt: prev.submittedAt || null,
+        submittedBy: prev.submittedBy || null,
+        approvedAt: prev.approvedAt || null,
+        approvedBy: prev.approvedBy || null,
+        rejectedAt: prev.rejectedAt || null,
+        rejectedBy: prev.rejectedBy || null,
+        rejectionNote: prev.rejectionNote || null
+      };
+
+      if (idx>-1) arr[idx] = rec; else arr.push(rec);
+      saveRecords(arr);
+
+      f.reset(); $('#recordId').value='';
+      window.tempDocs=[]; window.tempImgs=[];
+      $('#docPreview').innerHTML=''; $('#imgPreview').innerHTML='';
+      document.getElementById('buktiDokumen').value = '';
+      document.getElementById('buktiFoto').value = '';
+      renderTable();
+      notify('Data tersimpan.', 'success');
+    });
+
+    // Detail PDF
+    let CURRENT_DETAIL_RECORD = null;
+
+    function renderRecordDetailHTML(rec){
+      const esc = s=> String(s ?? '').replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+      const nl2br = s => esc(s).replace(/\n/g,'<br>');
+
+      const docsHTML = (rec.docs ||[]).length
+        ? rec.docs.map(d=>`<div class="mb-1">
+              <i class="bi bi-file-earmark-text"></i>
+              <a href="${d.dataUrl}" download="${esc(d.name)}">${esc(d.name)}</a>
+              <span class="text-secondary">(${bytesToSize(d.size)})</span>
+            </div>`).join('')
+        : '<span class="text-secondary">Tidak ada</span>';
+
+      const imgsHTML = (rec.imgs||[]).length
+        ? `<div class="d-flex flex-wrap gap-2">${
+            rec.imgs.map(img=>`<img class="thumb border" src="${img.dataUrl}" alt="${esc(img.name)}">`).join('')
+          }</div>`
+        : '<span class="text-secondary">Tidak ada</span>';
+
+      const statusLine = `
+        <div class="mt-2">${statusBadge(rec.status||'draft')}
+          ${rec.status==='rejected' && rec.rejectionNote ? `<div class="text-danger small mt-1">Alasan tolak: ${esc(rec.rejectionNote)}</div>`:''}
+        </div>
+      `;
+
+      return `
+        <style>
+          @media print { body { background:#fff; color:#000; } .no-print { display:none !important; } }
+          .kv dt{ width: 180px; } .kv dd{ margin-left:200px; } .kv{ margin-bottom:.25rem; }
+          .hr { border-top:1px solid #444; margin:.75rem 0; }
+        </style>
+        <div id="printArea">
+          <div class="mb-2"><strong>Tanggal</strong>: ${esc(rec.tanggal||'')}${rec.waktu? ' '+esc(rec.waktu):''}</div>
+          ${statusLine}
+          <div class="row">
+            <div class="col-md-6">
+              <div class="hr"></div>
+              <h6>Data Petugas</h6>
+              <dl class="kv">
+                <dt>Nama</dt><dd>${esc(rec.nama || '-')}</dd>
+                <dt>NIP/NIPPPK/NIK</dt><dd>${esc(rec.identitas || '-')}</dd>
+                <dt>Jenjang Karier</dt><dd>${esc(rec.jenjang || '-')}</dd>
+                <dt>Jabatan</dt><dd>${esc(rec.jabatan || '-')}</dd>
+                <dt>Jenis Pegawai</dt><dd>${esc(rec.jenisPegawai || '-')}</dd>
+                <dt>Shift</dt><dd>${esc(rec.shift || '-')}</dd>
+                <dt>Penugasan</dt><dd>${esc(rec.penugasan || '-')}</dd>
+              </dl>
+              <div class="hr"></div>
+              <h6>Bukti Dokumen</h6>
+              ${docsHTML}
+            </div>
+            <div class="col-md-6">
+              <div class="hr"></div>
+              <h6>Data Pasien & Tindakan</h6>
+              <dl class="kv">
+                <dt>Nama Pasien</dt><dd>${esc(rec.namaPasien||'-')}</dd>
+                <dt>No. RM</dt><dd>${esc(rec.noRM||'-')}</dd>
+                <dt>Umur</dt><dd>${esc(rec.umur||'-')}</dd>
+                <dt>Diagnosa Pre-Operasi</dt><dd>${nl2br(rec.dxPre||'-')}</dd>
+                <dt>Rencana Tindakan</dt><dd>${nl2br(rec.plan||'-')}</dd>
+                <dt>Diagnosa Post-Operasi</dt><dd>${nl2br(rec.dxPost||'-')}</dd>
+                <dt>Tim</dt><dd>${esc((rec.team||[]).join(', ')||'-')}</dd>
+                <dt>Uraian</dt><dd>${nl2br(rec.uraian||'-')}</dd>
+              </dl>
+              <div class="hr"></div>
+              <h6>Bukti Foto</h6>
+              ${imgsHTML}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const PDF_OPT = {
+      margin: 10,
+      filename: 'rekap-kegiatan.pdf',
+      image: { type: 'jpeg', quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    function getPrintNode(){
+      return document.querySelector('#detailModal #printArea') || document.getElementById('detailBody');
+    }
+    function downloadAsPDF(){
+      const area = getPrintNode();
+      if (!area) return alert('Buka detail dulu sebelum download PDF.');
+      if (!window.html2pdf) return alert('html2pdf belum termuat.');
+      window.html2pdf().set(PDF_OPT).from(area).save();
+    }
+    function openPDFPrintDialog(){
+      const area = getPrintNode();
+      if (!area) return alert('Buka detail dulu sebelum cetak.');
+      if (!window.html2pdf) return alert('html2pdf belum termuat.');
+      window.html2pdf().set(PDF_OPT).from(area).toPdf().get('pdf').then(pdf => {
+        pdf.autoPrint();
+        const url = pdf.output('bloburl');
+        const w = window.open(url, '_blank', 'noopener');
+        try { w && w.focus(); } catch(e) {}
+      });
+    }
+
+    function openDetailModal(rec){
+      CURRENT_DETAIL_RECORD = rec;
+      document.getElementById('detailBody').innerHTML = renderRecordDetailHTML(rec);
+      document.getElementById('btnPrintDetail').onclick = openPDFPrintDialog;
+      document.getElementById('btnDownloadDetail').onclick  = downloadAsPDF;
+      new bootstrap.Modal('#detailModal').show();
+    }
+
+    // Table actions + workflow
+    document.getElementById('dataTable').addEventListener('click', (e)=>{
+      const btn = e.target.closest('button[data-id]'); if (!btn) return;
+      const id = btn.dataset.id, act = btn.dataset.act;
+      const arr = loadRecords(); const rec = arr.find(r=>r.id===id); if (!rec) return;
+
+      const USER = getCurrentUser() || {username:'anon', role:'staff'};
+      const priv = isPriv();
+      const owner = rec.owner === USER.username;
+
+      if (act==='del'){
+        if (!(priv || (owner && rec.status!=='approved'))){ notify('Tidak boleh menghapus.', 'error'); return; }
+        if (confirm('Hapus entri ini?')){ saveRecords(arr.filter(r=>r.id!==id)); renderTable(); notify('Data dihapus.', 'success'); }
+        return;
+      }
+
+      if (act==='edit'){
+        if (!canEdit(rec)){ notify('Tidak boleh mengedit entri ini.', 'error'); return; }
+        document.getElementById('recordId').value = rec.id;
+        document.getElementById('tanggal').value = rec.tanggal||''; document.getElementById('waktu').value=rec.waktu||'';
+        document.getElementById('nama').value = rec.nama||''; document.getElementById('identitas').value=rec.identitas||'';
+        document.getElementById('JenjangKarier').value=rec.jenjang||''; document.getElementById('Jabatan').value=rec.jabatan||'';
+        document.getElementById('jenisPegawai').value = rec.jenisPegawai||''; document.getElementById('shift').value=rec.shift||''; document.getElementById('Penugasan').value=rec.penugasan||'';
+        document.getElementById('namaPasien').value=rec.namaPasien||''; document.getElementById('noRM').value=rec.noRM||''; document.getElementById('umur').value=rec.umur||'';
+        document.getElementById('dxPre').value=rec.dxPre||''; document.getElementById('plan').value=rec.plan||''; document.getElementById('dxPost').value=rec.dxPost||'';
+        document.getElementById('teamOperasi').value=(rec.team||[])[0]||'';
+        document.getElementById('uraianKegiatan').value=rec.uraian||'';
+
+        window.tempDocs = [...(rec.docs||[])];
+        window.tempImgs = [...(rec.imgs||[])];
+
+        document.getElementById('docPreview').innerHTML = window.tempDocs
+          .map(d=>`<span class="badge text-bg-dark border me-1 mb-1">${d.name} • ${bytesToSize(d.size)}</span>`).join('');
+        const wrap = document.getElementById('imgPreview'); wrap.innerHTML='';
+        window.tempImgs.forEach(img=>{
+          const im = new Image(); im.src = img.dataUrl; im.className='thumb border border-secondary';
+          wrap.appendChild(im);
+        });
+
+        window.scrollTo({top:0,behavior:'smooth'});
+        return;
+      }
+
+      if (act==='detail'){
+        openDetailModal(rec);
+        return;
+      }
+
+      if (act==='submit'){
+        if (!(owner && !priv)){ notify('Aksi ini khusus pemilik (perawat).', 'error'); return; }
+        if (!['draft','rejected'].includes(rec.status||'draft')){ notify('Hanya Draft/Ditolak yang bisa diajukan.', 'error'); return; }
+        rec.status = 'submitted';
+        rec.submittedAt = new Date().toISOString();
+        rec.submittedBy = USER.username;
+        rec.rejectedAt = null; rec.rejectedBy=null; rec.rejectionNote=null;
+        saveRecords(arr); renderTable();
+        notify('Formulir diajukan ke Operator.', 'info');
+        return;
+      }
+
+      if (act==='approve'){
+        if (!priv){ notify('Hanya operator/kepala/admin yang bisa menyetujui.', 'error'); return; }
+        if (rec.status!=='submitted'){ notify('Hanya entri yang diajukan yang bisa disetujui.', 'error'); return; }
+        rec.status='approved';
+        rec.approvedAt=new Date().toISOString();
+        rec.approvedBy=USER.username;
+        saveRecords(arr); renderTable();
+        notify('Formulir disetujui.', 'success');
+        return;
+      }
+
+      if (act==='reject'){
+        if (!priv){ notify('Hanya operator/kepala/admin yang bisa menolak.', 'error'); return; }
+        if (rec.status!=='submitted'){ notify('Hanya entri yang diajukan yang bisa ditolak.', 'error'); return; }
+        const note = prompt('Alasan penolakan (wajib diisi):','Data belum lengkap.');
+        if (note===null) return;
+        const reason = String(note||'').trim();
+        if (!reason){ notify('Alasan penolakan tidak boleh kosong.', 'error'); return; }
+        rec.status='rejected';
+        rec.rejectedAt=new Date().toISOString();
+        rec.rejectedBy=USER.username;
+        rec.rejectionNote=reason;
+        // saat ditolak, izinkan perawat edit lagi
+        saveRecords(arr); renderTable();
+        notify('Formulir ditolak dan dikembalikan ke perawat.', 'error');
+        return;
+      }
+    });
+
+    // Toolbar
+    document.getElementById('q').addEventListener('input', renderTable);
+    document.getElementById('filterShift').addEventListener('change', renderTable);
+    document.getElementById('filterDate').addEventListener('change', renderTable);
+    document.getElementById('btnPrint').addEventListener('click', ()=> window.print());
+    document.getElementById('btnClearAll').addEventListener('click', ()=>{
+      if (confirm('Hapus semua data lokal?')){ saveRecords([]); renderTable(); notify('Semua data lokal dihapus.', 'info'); }
+    });
+
+    // Seed & initial render
+    document.getElementById('tanggal').valueAsDate = new Date();
+    renderTable();
+  </script>
+
+  <!-- [ADD] ===== Ekspor/Impor localStorage (LETakkan DI SINI, setelah APP SCRIPT) ===== -->
+  <script>
+    (function(){
+      // gunakan loadRecords(), saveRecords(), notify() yang sudah ada
+
+      function exportRecords(){
+        const payload = {
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          records: loadRecords()
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href = url;
+        a.download = `or-tracker-backup-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        try { notify('Backup diunduh.', 'info'); } catch(e){}
+      }
+
+      function mergeById(existing, incoming){
+        const map = new Map(existing.map(r => [r.id, r]));
+        for (const r of incoming){
+          const prev = map.get(r.id);
+          const newer = !prev || new Date(r.updatedAt || 0) > new Date(prev.updatedAt || 0);
+          if (newer) map.set(r.id, r);
+        }
+        return Array.from(map.values());
+      }
+
+      async function handleImportFile(file){
+        const text = await file.text();
+        const json = JSON.parse(text);
+        const arr  = Array.isArray(json) ? json : (json.records || []);
+        if (!Array.isArray(arr)) throw new Error('Format file tidak valid');
+
+        const existing = loadRecords();
+        const merged   = mergeById(existing, arr);
+        saveRecords(merged);
+
+        try { notify(`Impor selesai: ${arr.length} entri.`, 'success'); } catch(e){}
+        try { window.renderTable && window.renderTable(); } catch(e){}
+      }
+
+      document.getElementById('btnExport')?.addEventListener('click', exportRecords);
+      document.getElementById('fileImport')?.addEventListener('change', (e)=>{
+        const file = e.target.files?.[0];
+        if (!file) return;
+        handleImportFile(file).catch(err=>{
+          try { notify('Gagal impor: ' + (err?.message||err), 'error'); } catch(e){}
+        }).finally(()=> { e.target.value = ''; });
+      });
+    })();
+  </script>
+  <!-- [END ADD Ekspor/Impor] -->
+
+  <!-- [ADD] staging area untuk render PDF agar tidak blank -->
+  <div id="pdfStaging" style="position:fixed;left:-99999px;top:0;width:794px;min-height:1123px;"></div>
+
+  <!-- [ADD] script PDF versi staging (dibungkus blok agar tidak bentrok const) -->
+  <script>
+  {
+  function renderRecordPDFHTML(rec){
+    const esc = s=> String(s ?? '').replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m]));
+    const nl2br = s => esc(s).replace(/\n/g,'<br>');
+
+    const docsHTML = (rec.docs||[]).length
+      ? rec.docs.map(d=>`<div style="margin-bottom:4px;">
+           <span style="display:inline-block;width:14px;text-align:center;">📄</span>
+           <span>${esc(d.name)}</span>
+           <span style="color:#555;font-size:12px;"> (${(d.size/1024).toFixed(1)} KB)</span>
+         </div>`).join('')
+      : '<span style="color:#666;">Tidak ada</span>';
+
+    const imgsHTML = (rec.imgs||[]).length
+      ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+           ${rec.imgs.map(img=>`<img src="${img.dataUrl}" alt="${esc(img.name)}" style="width:80px;height:80px;object-fit:cover;border:1px solid #ccc;border-radius:6px;">`).join('')}
+         </div>`
+      : '<span style="color:#666;">Tidak ada</span>';
+
+    return `
+    <div style="background:#fff;color:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; padding:18mm; box-sizing:border-box;">
+      <h3 style="margin:0 0 10px 0;">Rekap Kegiatan OK</h3>
+      <div style="font-size:13px;margin-bottom:12px;">
+        <b>Tanggal</b>: ${esc(rec.tanggal||'')}${rec.waktu ? ' ' + esc(rec.waktu) : ''}
+      </div>
+      <div style="display:flex;gap:16px;align-items:flex-start;">
+        <div style="flex:1;min-width:0;">
+          <h4 style="margin:0 0 8px 0;font-size:16px;">Data Petugas</h4>
+          <div style="font-size:13px;line-height:1.5">
+            <div><b>Nama</b>: ${esc(rec.nama||'-')}</div>
+            <div><b>NIP/NIPPPK/NIK</b>: ${esc(rec.identitas||'-')}</div>
+            <div><b>Jenjang Karier</b>: ${esc(rec.jenjang||'-')}</div>
+            <div><b>Jabatan</b>: ${esc(rec.jabatan||'-')}</div>
+            <div><b>Jenis Pegawai</b>: ${esc(rec.jenisPegawai||'-')}</div>
+            <div><b>Shift</b>: ${esc(rec.shift||'-')}</div>
+            <div><b>Penugasan</b>: ${esc(rec.penugasan||'-')}</div>
+          </div>
+          <h4 style="margin:12px 0 6px 0;font-size:16px;">Bukti Dokumen</h4>
+          <div style="font-size:13px;">${docsHTML}</div>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <h4 style="margin:0 0 8px 0;font-size:16px;">Data Pasien & Tindakan</h4>
+          <div style="font-size:13px;line-height:1.5">
+            <div><b>Nama Pasien</b>: ${esc(rec.namaPasien||'-')}</div>
+            <div><b>No. RM</b>: ${esc(rec.noRM||'-')}</div>
+            <div><b>Umur</b>: ${esc(rec.umur||'-')}</div>
+            <div><b>Diagnosa Pre-Operasi</b>: ${nl2br(rec.dxPre||'-')}</div>
+            <div><b>Rencana Tindakan</b>: ${nl2br(rec.plan||'-')}</div>
+            <div><b>Diagnosa Post-Operasi</b>: ${nl2br(rec.dxPost||'-')}</div>
+            <div><b>Tim</b>: ${esc((rec.team||[]).join(', ')||'-')}</div>
+            <div><b>Uraian</b>: ${nl2br(rec.uraian||'-')}</div>
+          </div>
+          <h4 style="margin:12px 0 6px 0;font-size:16px;">Bukti Foto</h4>
+          ${imgsHTML}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  function waitImagesLoaded(root){
+    const imgs = Array.from(root.querySelectorAll('img'));
+    if (!imgs.length) return Promise.resolve();
+    return Promise.all(imgs.map(im => im.complete ? Promise.resolve() :
+      new Promise(res => { im.onload = im.onerror = res; })));
+  }
+
+  const PDF_OPT = {
+    margin:       0,
+    filename:     'rekap-kegiatan.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  async function buildPDFStagingAndGetNode(rec){
+    const stage = document.getElementById('pdfStaging');
+    stage.innerHTML = renderRecordPDFHTML(rec);
+    await waitImagesLoaded(stage);
+    return stage.firstElementChild;
+  }
+
+  async function downloadAsPDF_staging(rec){
+    if (!window.html2pdf) return alert('html2pdf belum termuat.');
+    const node = await buildPDFStagingAndGetNode(rec);
+    await window.html2pdf().set(PDF_OPT).from(node).save();
+  }
+
+  async function openPDFPrintDialog_staging(rec){
+    if (!window.html2pdf) return alert('html2pdf belum termuat.');
+    const node = await buildPDFStagingAndGetNode(rec);
+    await window.html2pdf().set(PDF_OPT).from(node).toPdf().get('pdf').then(pdf => {
+      pdf.autoPrint();
+      const url = pdf.output('bloburl');
+      const w = window.open(url, '_blank', 'noopener');
+      try { w && w.focus(); } catch(e) {}
+    });
+  }
+
+  function wireDetailButtons(rec){
+    const btnPrint = document.getElementById('btnPrintDetail');
+    const btnDown  = document.getElementById('btnDownloadDetail');
+    if (btnPrint) btnPrint.onclick = () => openPDFPrintDialog_staging(rec);
+    if (btnDown)  btnDown.onclick  = () => downloadAsPDF_staging(rec);
+  }
+
+  window.__wireDetailButtons = wireDetailButtons;
+  }
+  </script>
+
+  <!-- [ADD] wrapper: injeksi rec global + auto-wire tombol setiap buka modal -->
+  <script>
+  (function(){
+    var __origOpenDetailModal = window.openDetailModal;
+    if (typeof __origOpenDetailModal === 'function') {
+      window.openDetailModal = function(rec){
+        window.CURRENT_DETAIL_RECORD = rec;
+        __origOpenDetailModal(rec);
+        if (typeof window.__wireDetailButtons === 'function') {
+          window.__wireDetailButtons(rec);
+        }
+      };
+    }
+    var modalEl = document.getElementById('detailModal');
+    if (modalEl) {
+      modalEl.addEventListener('shown.bs.modal', function(){
+        if (typeof window.__wireDetailButtons === 'function' && window.CURRENT_DETAIL_RECORD){
+          window.__wireDetailButtons(window.CURRENT_DETAIL_RECORD);
+        }
+      });
+    }
+  })();
+  </script>
+
+  <!-- [ADD] ====== OVERRIDE TAMPAK PDF RAPI ====== -->
+  <script>
+  (function(){
+    const STYLE_CSS = `
+      .pdf-root{ background:#fff; color:#000; width:794px; min-height:1123px; box-sizing:border-box; padding:22mm; font:13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial; }
+      .pdf-header{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
+      .pdf-header .title{ font-size:20px; font-weight:700; letter-spacing:.2px; }
+      .pdf-header .meta{ font-size:12px; color:#222; }
+      .divider{ border-top:1px solid #bbb; margin:12px 0 16px; }
+      h4{ font-size:14px; margin:0 0 8px 0; }
+      .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+      .kv{ display:grid; grid-template-columns:160px 1fr; column-gap:10px; row-gap:6px; }
+      .kv dt{ font-weight:600; color:#222; }
+      .kv dd{ margin:0; color:#111; }
+      .row-doc{ display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+      .row-doc .ico{ width:16px; text-align:center; }
+      .row-doc .name{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:300px; }
+      .row-doc .meta{ color:#666; font-size:12px; }
+      .muted{ color:#666; }
+      .galeri{ display:flex; flex-wrap:wrap; gap:8px; }
+      .thumb{ width:84px; height:84px; object-fit:cover; border:1px solid #ccc; border-radius:6px; }
+      .ttd{ display:flex; justify-content:space-between; gap:32px; margin-top:18px; }
+      .ttd .label{ color:#333; }
+      .ttd .pad{ height:54px; border-bottom:1px dashed #aaa; margin:10px 0; }
+      .ttd .name{ font-weight:600; }
+      .doc-link{ color:#0b57d0; text-decoration:underline; }
+    `;
+    function injectStyleOnce(){
+      if (document.getElementById('pdfTidyStyle')) return;
+      const s = document.createElement('style');
+      s.id = 'pdfTidyStyle';
+      s.textContent = STYLE_CSS;
+      document.head.appendChild(s);
+    }
+
+    function prettyRecordPDFHTML(rec){
+      const esc = s => String(s ?? '').replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+      const nl2br = s => esc(s).replace(/\n/g,'<br>');
+
+      const docsHTML = (rec.docs||[]).length
+        ? rec.docs.map(d=>`
+            <div class="row-doc">
+              <span class="ico">📄</span>
+              <a class="name doc-link" href="${d.dataUrl}" download="${esc(d.name)}">${esc(d.name)}</a>
+              <span class="meta"> ${(d.size/1024).toFixed(1)} KB</span>
+            </div>
+          `).join('')
+        : '<div class="muted">Tidak ada</div>';
+
+      const imgsHTML = (rec.imgs||[]).length
+        ? `<div class="galeri">${rec.imgs.map(img=>`<img src="${img.dataUrl}" alt="${esc(img.name)}" class="thumb">`).join('')}</div>`
+        : '<div class="muted">Tidak ada</div>';
+
+      return `
+      <div id="pdfDoc" class="pdf-root">
+        <div class="pdf-header">
+          <div class="title">Rekap Kegiatan OK</div>
+          <div class="meta">
+            <div><b>Tanggal</b>: ${esc(rec.tanggal||'-')}${rec.waktu?' '+esc(rec.waktu):''}</div>
+            <div><b>Petugas</b>: ${esc(rec.nama||'-')}</div>
+            <div><b>No. RM</b>: ${esc(rec.noRM||'-')}</div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="grid-2">
+          <section>
+            <h4>Data Petugas</h4>
+            <dl class="kv">
+              <dt>Nama</dt><dd>${esc(rec.nama||'-')}</dd>
+              <dt>NIP/NIPPPK/NIK</dt><dd>${esc(rec.identitas||'-')}</dd>
+              <dt>Jenjang Karier</dt><dd>${esc(rec.jenjang||'-')}</dd>
+              <dt>Jabatan</dt><dd>${esc(rec.jabatan||'-')}</dd>
+              <dt>Jenis Pegawai</dt><dd>${esc(rec.jenisPegawai||'-')}</dd>
+              <dt>Shift</dt><dd>${esc(rec.shift||'-')}</dd>
+              <dt>Penugasan</dt><dd>${esc(rec.penugasan||'-')}</dd>
+            </dl>
+
+            <h4 style="margin-top:14px;">Bukti Dokumen</h4>
+            ${docsHTML}
+          </section>
+
+          <section>
+            <h4>Data Pasien & Tindakan</h4>
+            <dl class="kv">
+              <dt>Nama Pasien</dt><dd>${esc(rec.namaPasien||'-')}</dd>
+              <dt>Umur</dt><dd>${esc(rec.umur||'-')}</dd>
+              <dt>Diagnosa Pre-Operasi</dt><dd>${nl2br(rec.dxPre||'-')}</dd>
+              <dt>Rencana Tindakan</dt><dd>${nl2br(rec.plan||'-')}</dd>
+              <dt>Diagnosa Post-Operasi</dt><dd>${nl2br(rec.dxPost||'-')}</dd>
+              <dt>Tim</dt><dd>${esc((rec.team||[]).join(', ')||'-')}</dd>
+              <dt>Uraian</dt><dd>${nl2br(rec.uraian||'-')}</dd>
+            </dl>
+
+            <h4 style="margin-top:14px;">Bukti Foto</h4>
+            ${imgsHTML}
+          </section>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="ttd">
+          <div>
+            <div class="label">Petugas</div>
+            <div class="pad"></div>
+            <div class="name">${esc(rec.nama||'-')}</div>
+          </div>
+          <div>
+            <div class="label">Mengetahui</div>
+            <div class="pad"></div>
+            <div class="name">_____________________</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    function waitImagesLoaded2(root){
+      const imgs = Array.from(root.querySelectorAll('img'));
+      if (!imgs.length) return Promise.resolve();
+      return Promise.all(imgs.map(im => im.complete ? Promise.resolve() : new Promise(res => { im.onload = im.onerror = res; })));
+    }
+
+    const PDF_OPT_TIDY = {
+      margin: 0,
+      filename: 'rekap-kegiatan.pdf',
+      enableLinks: true,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    async function buildPDFStagingAndGetNode_TIDY(rec){
+      injectStyleOnce();
+      const stage = document.getElementById('pdfStaging');
+      stage.innerHTML = prettyRecordPDFHTML(rec);
+      await waitImagesLoaded2(stage);
+      return stage.firstElementChild;
+    }
+
+    window.downloadAsPDF_staging = async function(rec){
+      if (!window.html2pdf) return alert('html2pdf belum termuat.');
+      const node = await buildPDFStagingAndGetNode_TIDY(rec);
+      await window.html2pdf().set(PDF_OPT_TIDY).from(node).save();
+    };
+    window.openPDFPrintDialog_staging = async function(rec){
+      if (!window.html2pdf) return alert('html2pdf belum termuat.');
+      const node = await buildPDFStagingAndGetNode_TIDY(rec);
+      await window.html2pdf().set(PDF_OPT_TIDY).from(node).toPdf().get('pdf').then(pdf=>{
+        pdf.autoPrint();
+        const url = pdf.output('bloburl');
+        const w = window.open(url, '_blank', 'noopener');
+        try{ w && w.focus(); }catch(e){}
+      });
+    };
+
+    const oldWire = window.__wireDetailButtons;
+    window.__wireDetailButtons = function(rec){
+      const btnPrint = document.getElementById('btnPrintDetail');
+      const btnDown  = document.getElementById('btnDownloadDetail');
+      if (btnPrint) btnPrint.onclick = () => window.openPDFPrintDialog_staging(rec);
+      if (btnDown)  btnDown.onclick  = () => window.downloadAsPDF_staging(rec);
+      if (typeof oldWire === 'function'){ try{ oldWire(rec); }catch(e){} }
+    };
+  })();
+  </script>
+
+  <!-- [ADD] ===== Rekap Perawat: util periode, grouping, render, export ===== -->
+  <script>
+  (function(){
+    // Monday-based week
+    function startOfWeek(d){
+      const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const day = (x.getDay()+6)%7; // 0=Mon ... 6=Sun
+      x.setDate(x.getDate()-day);
+      x.setHours(0,0,0,0);
+      return x;
+    }
+    function endOfWeek(d){ const s=startOfWeek(d); const e=new Date(s); e.setDate(s.getDate()+7); return e; }
+    function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1, 0,0,0,0); }
+    function endOfMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 1, 0,0,0,0); }
+    function fmtISO(x){ return x.toISOString().slice(0,10); }
+    function inRangeISO(iso, start, endExcl){ return iso && iso >= start && iso < endExcl; }
+
+    function collectByNurse(records){
+      const m = new Map();
+      for (const r of records){
+        const key = r.owner || r.nama || 'unknown';
+        const name = r.ownerName || r.nama || key;
+        if (!m.has(key)){
+          m.set(key, { key, name, total:0, Draft:0, Diajukan:0, Disetujui:0, Ditolak:0, rows:[] });
+        }
+        const obj = m.get(key);
+        obj.total++;
+        const s = (r.status||'draft').toLowerCase();
+        if (s==='draft')      obj.Draft++;
+        else if (s==='submitted') obj.Diajukan++;
+        else if (s==='approved')  obj.Disetujui++;
+        else if (s==='rejected')  obj.Ditolak++;
+        obj.rows.push(r);
+      }
+      return Array.from(m.values()).sort((a,b)=> b.total - a.total || a.name.localeCompare(b.name));
+    }
+
+    function badgeClass(s){
+      s = (s||'').toLowerCase();
+      if (s==='approved') return 'text-bg-success';
+      if (s==='submitted')  return 'text-bg-info';
+      if (s==='rejected')   return 'text-bg-danger';
+      return 'text-bg-secondary';
+    }
+    function slug(x){ return String(x||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+    // Render tabel rekap
+    function renderRekapPerawat(){
+      const periodType = (document.getElementById('rekapPeriodType')?.value || 'bulan');
+      const anchorStr  = document.getElementById('rekapAnchorDate')?.value;
+      const anchor     = anchorStr ? new Date(anchorStr+'T00:00:00') : new Date();
+
+      const USER = getCurrentUser() || { username:'anon', role:'staff' };
+      const canSeeAll = ['admin','kepala','operator'].includes((USER.role||'').toLowerCase());
+
+      let start, end;
+      if (periodType === 'minggu'){ start = startOfWeek(anchor); end = endOfWeek(anchor); }
+      else { start = startOfMonth(anchor); end = endOfMonth(anchor); }
+
+      const startISO = fmtISO(start), endISO = fmtISO(end);
+      const all = loadRecords()
+        .filter(r => inRangeISO(r.tanggal, startISO, endISO))
+        .filter(r => canSeeAll ? true : (r.owner === USER.username));
+
+      const grouped = collectByNurse(all);
+
+      const tbody = document.querySelector('#rekapPerawatTable tbody');
+      tbody.innerHTML = grouped.map(g=>`
+        <tr class="pointer" data-nurse="${encodeURIComponent(g.key)}" title="Klik untuk lihat detail periode ini">
+          <td>${g.name||'-'}</td>
+          <td class="text-center"><span class="badge bg-light text-dark">${g.total}</span></td>
+          <td class="text-center">${g.Draft||0}</td>
+          <td class="text-center">${g.Diajukan||0}</td>
+          <td class="text-center">${g.Disetujui||0}</td>
+          <td class="text-center">${g.Ditolak||0}</td>
+        </tr>
+      `).join('') || `<tr><td colspan="6" class="text-center text-secondary">Tidak ada data pada periode ini.</td></tr>`;
+
+      // Footer sum
+      const sum = grouped.reduce((a,g)=>({
+        total:a.total+g.total,
+        Draft:a.Draft+(g.Draft||0),
+        Diajukan:a.Diajukan+(g.Diajukan||0),
+        Disetujui:a.Disetujui+(g.Disetujui||0),
+        Ditolak:a.Ditolak+(g.Ditolak||0)
+      }), {total:0,Draft:0,Diajukan:0,Disetujui:0,Ditolak:0});
+      document.getElementById('sum_total').textContent = sum.total;
+      document.getElementById('sum_draft').textContent = sum.Draft;
+      document.getElementById('sum_diajukan').textContent = sum.Diajukan;
+      document.getElementById('sum_disetujui').textContent = sum.Disetujui;
+      document.getElementById('sum_ditolak').textContent = sum.Ditolak;
+
+      const desc = document.getElementById('rekapPeriodDesc');
+      desc.textContent = `Periode: ${startISO} s.d. ${new Date(new Date(end).getTime()-86400000).toISOString().slice(0,10)} • Mode: ${periodType==='minggu'?'Mingguan':'Bulanan'}`;
+
+      // Row click: buka modal detail
+      tbody.onclick = function(e){
+        const tr = e.target.closest('tr[data-nurse]'); if (!tr) return;
+        const nurseKey = decodeURIComponent(tr.dataset.nurse);
+        const pack = grouped.find(g=>g.key === nurseKey);
+        if (!pack) return;
+        openRekapPerawatModal(pack, startISO, endISO);
+      };
+
+      // Simpan range global buat export modal
+      window.__REKAP_LAST_RANGE__ = { startISO, endISO, periodType };
+      window.__REKAP_LAST_DATA__  = grouped;
+    }
+
+    // Modal detail rekap perawat
+    function openRekapPerawatModal(group, startISO, endISO){
+    // Guard: Staff hanya boleh buka/cetak miliknya sendiri
+    const me = getCurrentUser();
+    if (!isPriv() && group.key !== (me?.username || '')) {
+      notify('Hanya bisa cetak rekap milik sendiri.', 'error');
+      return;
+    }
+      const titleName = document.getElementById('rekapNamaPerawat');
+      titleName.textContent = `${group.name} (${startISO} s.d. ${new Date(new Date(endISO).getTime()-86400000).toISOString().slice(0,10)})`;
+
+      const rows = group.rows.slice().sort((a,b)=> (b.tanggal + (b.waktu||'')).localeCompare(a.tanggal + (a.waktu||'')));
+
+      const tb = `
+        <div id="rekapPerawatPrintArea">
+          <h5 class="mb-3">Rekap Kegiatan — ${group.name}</h5>
+          <div class="small text-secondary mb-2">Periode ${startISO} s.d. ${new Date(new Date(endISO).getTime()-86400000).toISOString().slice(0,10)}</div>
+          <table class="table table-dark table-striped">
+            <thead>
+              <tr>
+                <th style="width:105px">Tanggal</th>
+                <th>Pasien</th>
+                <th>No RM</th>
+                <th>Penugasan</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${
+                rows.map(r=>`
+                  <tr>
+                    <td>${r.tanggal||''}<div class="small text-secondary">${r.waktu||''}</div></td>
+                    <td>${(r.namaPasien||'').replace(/</g,'&lt;')}</td>
+                    <td>${r.noRM||''}</td>
+                    <td>${r.penugasan||''}</td>
+                    <td><span class="badge ${badgeClass(r.status)}">${r.status||'draft'}</span></td>
+                  </tr>
+                `).join('')
+              }
+            </tbody>
+          </table>
+        </div>
+      `;
+      document.getElementById('rekapPerawatBody').innerHTML = tb;
+
+      const modal = new bootstrap.Modal('#rekapPerawatModal');
+      modal.show();
+
+      // print handler
+      document.getElementById('btnPrintRekapPerawat').onclick = () => {
+        const node = document.getElementById('rekapPerawatPrintArea');
+        if (!window.html2pdf) return alert('html2pdf belum termuat.');
+        window.html2pdf().set({
+          margin: 10,
+          filename: `rekap-${slug(group.name)}-${startISO}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true, backgroundColor:'#ffffff' },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        }).from(node).save();
+      };
+    }
+
+    // Export PDF untuk tabel rekap agregat
+    document.getElementById('btnRekapExport')?.addEventListener('click', ()=>{
+      // Guard: hanya operator/admin
+      if (!isPriv()) {
+        notify('Ekspor rekap semua staff hanya untuk operator/admin.', 'error');
+        return;
+      }
+      const card = document.getElementById('rekapPerawatCard');
+      if (!card) return;
+      const range = window.__REKAP_LAST_RANGE__ || {};
+      if (!window.html2pdf) return alert('html2pdf belum termuat.');
+      window.html2pdf().set({
+        margin: 10,
+        filename: `rekap-perawat-${(range.periodType==='minggu'?'mingguan':'bulanan')}-${(range.startISO||'')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor:'#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      }).from(card).save();
+    });
+
+    // Reactivity controls
+    document.getElementById('rekapPeriodType')?.addEventListener('change', renderRekapPerawat);
+    document.getElementById('rekapAnchorDate')?.addEventListener('change', renderRekapPerawat);
+
+    // Set default anchor date = hari ini
+    const anchor = document.getElementById('rekapAnchorDate');
+    if (anchor) anchor.valueAsDate = new Date();
+
+    // Hook ke renderTable agar rekap ikut refresh saat data berubah
+    const __origRenderTable__ = window.renderTable;
+    window.renderTable = function(){
+      __origRenderTable__ && __origRenderTable__();
+      renderRekapPerawat();
+    };
+
+    // initial
+    renderRekapPerawat();
+  })();
+  </script>
+  <!-- [END ADD] -->
+</body>
+</html>

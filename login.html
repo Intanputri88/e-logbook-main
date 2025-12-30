@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>E-LOGBOOK INSTALASI BEDAH SENTRAL</title>
+  <style>
+    body{background:#0b2a33;color:#eaf2f6;min-height:100vh;display:grid;place-items:center;margin:0;font-family:system-ui,Segoe UI,Roboto,Arial}
+    .login-card{width:100%;max-width:360px;background:#114a5b;border-radius:12px;padding:16px 18px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .login-title{font-size:1.25rem;font-weight:700;margin:6px 0 14px}
+    .login-inner{max-width:280px;margin:0 auto}
+    .login-field{width:100%;padding:8px 10px;border:0;border-radius:8px;margin:8px 0;background:#0c3946;color:#eaf2f6;box-sizing:border-box}
+    .login-btn{width:100%;padding:9px 10px;border:0;border-radius:8px;background:#ff8800;color:#111;font-weight:700;cursor:pointer}
+    .remember{display:flex;align-items:center;gap:.5rem;font-size:.9rem;opacity:.9;margin:6px 0 10px}
+    .muted{font-size:.85rem;opacity:.7;text-align:center;margin-top:8px}
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-title">E-LOGBOOK INSTALASI BEDAH SENTRAL</div>
+    <div class="login-inner">
+      <label>Username</label>
+      <input id="username" class="login-field" placeholder="masukkan username" autocomplete="username" />
+      <label>Password</label>
+      <input id="password" type="password" class="login-field" placeholder="masukkan password" autocomplete="current-password" />
+      <label class="remember"><input id="remember" type="checkbox"> Ingat saya</label>
+      <button id="btnLogin" type="button" class="login-btn">Masuk</button>
+      <div class="muted">Gunakan akun yang sudah terdaftar</div>
+    </div>
+  </div>
+
+  <!-- Auth -->
+  <script src="auth.js"></script>
+
+  <script>
+    (function (){
+      try{
+        if (window.ORAuth && ORAuth.currentUser && ORAuth.currentUser()){
+          location.href = 'index.html';
+        }
+      } catch (e) {}
+    })();
+
+    function doLogin(){
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const r = document.getElementById('remember').checked;
+
+      if (!window.ORAuth) { alert('auth.js belum termuat.'); return; }
+      if (!u || !p) { alert('Username dan password wajib diisi.'); return; }
+
+      try {
+        ORAuth.login(u, p, r);
+        location.href = 'index.html';
+      } catch (e) {
+        alert(e?.message || 'Gagal login');
+      }
+    }
+
+    document.getElementById('btnLogin').addEventListener('click', doLogin);
+
+    // Enter untuk login (hanya saat fokus di input username/password)
+    document.addEventListener('keydown', (e) => {
+      const active = document.activeElement?.id;
+      if (e.key === 'Enter' && (active === 'username' || active === 'password')) {
+        doLogin();
+      }
+    });
+  </script>
+</body>
+</html>

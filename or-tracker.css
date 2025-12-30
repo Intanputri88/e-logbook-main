@@ -1,0 +1,10 @@
+/* htdocs/contoh1/or-tracker.css */
+body{background:#0b1720;color:#e9eef3}
+.navbar{ background:#004D61; }
+.card{ background:#FF7A0F; color:#08131a }
+.table thead th{position:sticky;top:0;background:#FF7A0F;z-index:1}
+.thumb{width:64px;height:64px;object-fit:cover;border-radius:8px}
+.required:after{content:" *";color:#ff6b6b}
+.truncate{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pointer{cursor:pointer}
+#toastArea{ position: fixed; right: 16px; bottom: 16px; z-index: 2000; }
